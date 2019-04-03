@@ -7,7 +7,7 @@ const DEFAULT_DYNAMO_EVENT_NAMES = ['INSERT', 'REMOVE', 'MODIFY'];
 const RAW_BODY_HANDLER = record => JSON.stringify(record);
 
 class DynamoStreamHandler {
-  constructor({ sqsEndpoint, eventTypes: eventNames, logger, customBody } = {}) {
+  constructor({ sqsEndpoint, eventTypes: eventNames, logger, customBodyHandler } = {}) {
     assert(sqsEndpoint, 'sqsEndpoint is a require paramter');
     this.sqsEndpoint = sqsEndpoint;
 
@@ -20,8 +20,11 @@ class DynamoStreamHandler {
     this.logger = logger ? logger : new ConsoleLogger();
     this.logger.info(`Creating dynamo-to-sqs: SQS Endpoint ${this.sqsEndpoint} | Event Names: ${this.eventNames}`);
 
-    assert(!customBody || {}.toString.call(customBody) === '[object Function]', 'customBody must be a function');
-    this.bodyHandler = customBody ? customBody : RAW_BODY_HANDLER;
+    assert(
+      !customBodyHandler || {}.toString.call(customBodyHandler) === '[object Function]',
+      'customBody must be a function',
+    );
+    this.bodyHandler = customBodyHandler ? customBodyHandler : RAW_BODY_HANDLER;
   }
 
   async handler(event, context) {
