@@ -7,7 +7,7 @@ const DEFAULT_DYNAMO_EVENT_NAMES = ['INSERT', 'REMOVE', 'MODIFY'];
 const RAW_BODY_HANDLER = record => JSON.stringify(record);
 
 class DynamoStreamHandler {
-  constructor({ sqsEndpoint, eventTypes: eventNames, logger, customBodyHandler } = {}) {
+  constructor({ sqsEndpoint, eventNames, logger, customBodyHandler } = {}) {
     assert(sqsEndpoint, 'sqsEndpoint is a require paramter');
     this.sqsEndpoint = sqsEndpoint;
 
