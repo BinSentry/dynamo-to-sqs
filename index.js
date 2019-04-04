@@ -4,7 +4,7 @@ const AWS = require('aws-sdk');
 const sqs = new AWS.SQS();
 
 const DEFAULT_DYNAMO_EVENT_NAMES = ['INSERT', 'REMOVE', 'MODIFY'];
-const RAW_BODY_HANDLER = record => JSON.stringify(record);
+const RAW_BODY_HANDLER = record => record;
 
 class DynamoStreamHandler {
   constructor({ sqsEndpoint, eventNames, logger, customBodyHandler } = {}) {
@@ -45,7 +45,7 @@ async function sendToSqs({ record, params }) {
   params.logger.info('DynamoDB Record: %j', record);
 
   const body = {
-    MessageBody: params.bodyHandler(record),
+    MessageBody: JSON.stringify(params.bodyHandler(record)),
     QueueUrl: params.sqsEndpoint,
   };
 
