@@ -44,7 +44,7 @@ class DynamoStreamHandler {
 async function sendToSqs({ record, params }) {
   params.logger.info('DynamoDB Record: %j', record);
 
-  const params = {
+  const body = {
     MessageBody: params.bodyHandler(record),
     QueueUrl: params.sqsEndpoint,
   };
@@ -54,7 +54,7 @@ async function sendToSqs({ record, params }) {
     return;
   }
 
-  await sqs.sendMessage(params).promise();
+  await sqs.sendMessage(body).promise();
 }
 
 class ConsoleLogger {
