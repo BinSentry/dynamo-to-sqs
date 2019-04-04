@@ -34,7 +34,7 @@ class DynamoStreamHandler {
 
         return `Successfully processed ${event.Records.length} records.`;
       } catch (err) {
-        this.logger.error({ err }, 'Failed processing records');
+        params.logger.error({ err }, 'Failed processing records');
         context.fail(err);
       }
     };
