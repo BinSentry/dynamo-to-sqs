@@ -11,7 +11,7 @@ class DynamoStreamHandler {
     assert(sqsEndpoint, 'sqsEndpoint is a require paramter');
     this.sqsEndpoint = sqsEndpoint;
 
-    this.eventNames = eventNames ? eventNames.toUpperCase().split(',') : DEFAULT_DYNAMO_EVENT_NAMES;
+    this.eventNames = eventNames ? eventNames.map(name => name.toUpperCase()) : DEFAULT_DYNAMO_EVENT_NAMES;
     assert(
       this.eventNames.every(x => DEFAULT_DYNAMO_EVENT_NAMES.includes(x)),
       `Event Names must be in ${DEFAULT_DYNAMO_EVENT_NAMES}`,
@@ -25,32 +25,32 @@ class DynamoStreamHandler {
       'customBody must be a function',
     );
     this.bodyHandler = customBodyHandler ? customBodyHandler : RAW_BODY_HANDLER;
-  }
 
-  async handler(event, context) {
-    console.log(this);
-    try {
-      const promises = event.Records.map(record => sendToSqs({ record, handler: this }));
-      await Promise.all(promises);
+    const params = this;
+    this.handler = async (event, context) => {
+      try {
+        const promises = event.Records.map(record => sendToSqs({ record, params }));
+        await Promise.all(promises);
 
-      return `Successfully processed ${event.Records.length} records.`;
-    } catch (err) {
-      this.logger.error({ err }, 'Failed processing records');
-      context.fail(err);
-    }
+        return `Successfully processed ${event.Records.length} records.`;
+      } catch (err) {
+        this.logger.error({ err }, 'Failed processing records');
+        context.fail(err);
+      }
+    };
   }
 }
 
-async function sendToSqs({ record, handler }) {
-  handler.logger.info('DynamoDB Record: %j', record);
+async function sendToSqs({ record, params }) {
+  params.logger.info('DynamoDB Record: %j', record);
 
   const params = {
-    MessageBody: handler.bodyHandler(record),
-    QueueUrl: handler.sqsEndpoint,
+    MessageBody: params.bodyHandler(record),
+    QueueUrl: params.sqsEndpoint,
   };
 
-  if (!handler.eventNames.includes(record.eventName.toUpperCase())) {
-    handler.logger.info(`Event not forwarded to SQS: Event Name ${record.eventName}`);
+  if (!params.eventNames.includes(record.eventName.toUpperCase())) {
+    params.logger.info(`Event not forwarded to SQS: Event Name ${record.eventName}`);
     return;
   }
 
