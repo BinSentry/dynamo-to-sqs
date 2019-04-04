@@ -28,6 +28,7 @@ class DynamoStreamHandler {
   }
 
   async handler(event, context) {
+    console.log(this);
     try {
       const promises = event.Records.map(record => sendToSqs({ record, handler: this }));
       await Promise.all(promises);
