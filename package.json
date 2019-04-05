@@ -1,0 +1,27 @@
+{
+  "name": "dynamo-to-sqs",
+  "version": "1.0.0",
+  "description": "Forward dynamodb streams to SQS with minimal setup",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BinSentry/dynamo-to-sqs.git"
+  },
+  "keywords": [
+    "dynamodb",
+    "sqs",
+    "forwarder"
+  ],
+  "author": "BinSentry Inc",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/BinSentry/dynamo-to-sqs/issues"
+  },
+  "homepage": "https://github.com/BinSentry/dynamo-to-sqs#readme",
+  "dependencies": {
+    "aws-sdk": "^2.435.0"
+  }
+}
