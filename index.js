@@ -7,18 +7,20 @@ const DEFAULT_DYNAMO_EVENT_NAMES = ['INSERT', 'REMOVE', 'MODIFY'];
 const RAW_BODY_HANDLER = record => record;
 
 class DynamoStreamHandler {
-  constructor({ sqsEndpoint, eventNames, logger, customBodyHandler } = {}) {
-    assert(sqsEndpoint, 'sqsEndpoint is a require paramter');
-    this.sqsEndpoint = sqsEndpoint;
-
-    this.eventNames = eventNames ? eventNames.map(name => name.toUpperCase()) : DEFAULT_DYNAMO_EVENT_NAMES;
+  constructor({ sqsConfigs, logger, customBodyHandler } = {}) {
     assert(
-      this.eventNames.every(x => DEFAULT_DYNAMO_EVENT_NAMES.includes(x)),
-      `Event Names must be in ${DEFAULT_DYNAMO_EVENT_NAMES}`,
+      sqsConfigs && Array.isArray(sqsConfigs) && sqsConfigs.length > 0,
+      'sqsConfig must be an array with at least one element',
     );
-
+    this.sqsConfigs = sqsConfigs;
     this.logger = logger ? logger : new ConsoleLogger();
-    this.logger.info(`Creating dynamo-to-sqs: SQS Endpoint ${this.sqsEndpoint} | Event Names: ${this.eventNames}`);
+    const params = this;
+
+    this.sqsConfigs.forEach(setEventNames);
+    this.logger.info(`Creating dynamo-to-sqs`);
+    this.sqsConfigs.forEach(sqsConfig =>
+      params.logger.info(`SQS Endpoint ${sqsConfig.endpoint} | Event Names: ${sqsConfig.eventNames}`),
+    );
 
     assert(
       !customBodyHandler || {}.toString.call(customBodyHandler) === '[object Function]',
@@ -26,7 +28,6 @@ class DynamoStreamHandler {
     );
     this.bodyHandler = customBodyHandler ? customBodyHandler : RAW_BODY_HANDLER;
 
-    const params = this;
     this.handler = async (event, context) => {
       try {
         const promises = event.Records.map(record => sendToSqs({ record, params }));
@@ -41,20 +42,35 @@ class DynamoStreamHandler {
   }
 }
 
+function setEventNames(sqsConfig) {
+  const { eventNames } = sqsConfig;
+  sqsConfig.eventNames = eventNames ? eventNames.map(name => name.toUpperCase()) : DEFAULT_DYNAMO_EVENT_NAMES;
+  assert(
+    sqsConfig.eventNames.every(x => DEFAULT_DYNAMO_EVENT_NAMES.includes(x)),
+    `Event Names must be in ${DEFAULT_DYNAMO_EVENT_NAMES}`,
+  );
+}
+
 async function sendToSqs({ record, params }) {
-  params.logger.info('DynamoDB Record: %j', record);
+  const MessageBody = JSON.stringify(params.bodyHandler(record));
 
-  const body = {
-    MessageBody: JSON.stringify(params.bodyHandler(record)),
-    QueueUrl: params.sqsEndpoint,
-  };
+  const promises = params.sqsConfigs.map(sqsConfig => {
+    params.logger.info('DynamoDB Record: %j', record);
 
-  if (!params.eventNames.includes(record.eventName.toUpperCase())) {
-    params.logger.info(`Event not forwarded to SQS: Event Name ${record.eventName}`);
-    return;
-  }
+    const body = {
+      MessageBody,
+      QueueUrl: sqsConfig.endpoint,
+    };
 
-  await sqs.sendMessage(body).promise();
+    if (!sqsConfig.eventNames.includes(record.eventName.toUpperCase())) {
+      params.logger.info(`Event not forwarded to SQS ${sqsConfig.endpoint}: Event Name ${record.eventName}`);
+      return;
+    }
+
+    return sqs.sendMessage(body).promise();
+  });
+
+  return Promise.all(promises);
 }
 
 class ConsoleLogger {
