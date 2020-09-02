@@ -21,7 +21,7 @@
     "url": "https://github.com/BinSentry/dynamo-to-sqs/issues"
   },
   "homepage": "https://github.com/BinSentry/dynamo-to-sqs#readme",
-  "dependencies": {
+  "peerDependencies": {
     "aws-sdk": "^2.435.0"
   }
 }
