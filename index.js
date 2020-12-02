@@ -54,9 +54,9 @@ function setEventNames(sqsConfig) {
 async function sendToSqs({ record, params }) {
   const MessageBody = JSON.stringify(params.bodyHandler(record));
 
-  const promises = params.sqsConfigs.map(sqsConfig => {
-    params.logger.info('DynamoDB Record: %j', record);
+  params.logger.info('DynamoDB Record: %j', record);
 
+  const promises = params.sqsConfigs.map(sqsConfig => {
     const body = {
       MessageBody,
       QueueUrl: sqsConfig.endpoint,
