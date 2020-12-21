@@ -1,6 +1,6 @@
 const assert = require('assert');
 const AWS = require('aws-sdk');
-Aws.config.update({
+AWS.config.update({
   region: process.env.AWS_REGION || 'us-east-1',
   sqs: { apiVersion: '2012-11-05' },
   httpOptions: { connectTimeout: 5000 },
