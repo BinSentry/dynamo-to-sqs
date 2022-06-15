@@ -59,12 +59,13 @@ function setEventNames(sqsConfig) {
 }
 
 async function sendToSqs({ record, params }) {
-  const MessageBody = JSON.stringify(params.bodyHandler(record));
+  const message = params.bodyHandler(record);
+  const MessageBody = JSON.stringify(message);
 
   params.logger.info('DynamoDB Record: %j', record);
 
-  if (!params.messageFilter(MessageBody)) {
-    params.logger.info('DynamoDB message filtered from SQS: %j', MessageBody);
+  if (!params.messageFilter(message)) {
+    params.logger.info('DynamoDB message filtered from SQS: %j', message);
     return;
   }
 
