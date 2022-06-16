@@ -10,9 +10,10 @@ const sqs = new AWS.SQS();
 
 const DEFAULT_DYNAMO_EVENT_NAMES = ['INSERT', 'REMOVE', 'MODIFY'];
 const RAW_BODY_HANDLER = record => record;
+const NO_FILTER = () => true;
 
 class DynamoStreamHandler {
-  constructor({ sqsConfigs, logger, customBodyHandler } = {}) {
+  constructor({ sqsConfigs, logger, customBodyHandler, messageFilter } = {}) {
     assert(
       sqsConfigs && Array.isArray(sqsConfigs) && sqsConfigs.length > 0,
       'sqsConfig must be an array with at least one element',
@@ -32,6 +33,7 @@ class DynamoStreamHandler {
       'customBody must be a function',
     );
     this.bodyHandler = customBodyHandler ? customBodyHandler : RAW_BODY_HANDLER;
+    this.messageFilter = messageFilter ? messageFilter : NO_FILTER;
 
     this.handler = async (event, context) => {
       try {
@@ -57,9 +59,15 @@ function setEventNames(sqsConfig) {
 }
 
 async function sendToSqs({ record, params }) {
-  const MessageBody = JSON.stringify(params.bodyHandler(record));
+  const message = params.bodyHandler(record);
+  const MessageBody = JSON.stringify(message);
 
   params.logger.info('DynamoDB Record: %j', record);
+
+  if (!params.messageFilter(message)) {
+    params.logger.info('DynamoDB message filtered from SQS: %j', message);
+    return;
+  }
 
   const promises = params.sqsConfigs.map(sqsConfig => {
     const body = {
