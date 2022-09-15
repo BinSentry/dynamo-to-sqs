@@ -64,11 +64,6 @@ async function sendToSqs({ record, params }) {
 
   params.logger.info('DynamoDB Record: %j', record);
 
-  if (!params.messageFilter(message)) {
-    params.logger.info('DynamoDB message filtered from SQS: %j', message);
-    return;
-  }
-
   const promises = params.sqsConfigs.map(sqsConfig => {
     const body = {
       MessageBody,
@@ -77,6 +72,11 @@ async function sendToSqs({ record, params }) {
 
     if (!sqsConfig.eventNames.includes(record.eventName.toUpperCase())) {
       params.logger.info(`Event not forwarded to SQS ${sqsConfig.endpoint}: Event Name ${record.eventName}`);
+      return;
+    }
+
+    if (!params.messageFilter({ ...message, sqsConfig })) {
+      params.logger.info(`DynamoDB message (${message}) filtered from SQS (${sqsConfig})`);
       return;
     }
 
