@@ -22,9 +22,9 @@
   },
   "homepage": "https://github.com/BinSentry/dynamo-to-sqs#readme",
   "devDependencies": {
-    "aws-sdk": "^2.435.0"
+    "aws-sdk": "^2.1354.0"
   },
   "peerDependencies": {
-    "aws-sdk": "^2.435.0"
+    "aws-sdk": "^2.1354.0"
   }
 }
