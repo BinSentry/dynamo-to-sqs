@@ -1,12 +1,7 @@
 const assert = require('assert');
-const AWS = require('aws-sdk');
-AWS.config.update({
-  region: process.env.AWS_REGION || 'us-east-1',
-  sqs: { apiVersion: '2012-11-05' },
-  httpOptions: { connectTimeout: 5000 },
-});
+const { SQS } = require('@aws-sdk/client-sqs');
 
-const sqs = new AWS.SQS();
+const sqs = new SQS();
 
 const DEFAULT_DYNAMO_EVENT_NAMES = ['INSERT', 'REMOVE', 'MODIFY'];
 const RAW_BODY_HANDLER = record => record;
@@ -80,7 +75,7 @@ async function sendToSqs({ record, params }) {
       return;
     }
 
-    return sqs.sendMessage(body).promise();
+    return sqs.sendMessage(body);
   });
 
   return Promise.all(promises);
