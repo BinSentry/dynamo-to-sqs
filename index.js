@@ -1,7 +1,14 @@
 const assert = require('assert');
 const { SQS } = require('@aws-sdk/client-sqs');
+const { NodeHttpHandler } = require('@aws-sdk/node-http-handler');
 
-const sqs = new SQS();
+const sqs = new SQS({
+  region: process.env.AWS_REGION || 'us-east-1',
+  apiVersion: '2012-11-05',
+  requestHandler: new NodeHttpHandler({
+    connectionTimeout: 5000,
+  }),
+});
 
 const DEFAULT_DYNAMO_EVENT_NAMES = ['INSERT', 'REMOVE', 'MODIFY'];
 const RAW_BODY_HANDLER = record => record;
