@@ -22,9 +22,11 @@
   },
   "homepage": "https://github.com/BinSentry/dynamo-to-sqs#readme",
   "devDependencies": {
-    "aws-sdk": "^2.435.0"
+    "@aws-sdk/client-sqs": "^3.0.0",
+    "@aws-sdk/node-http-handler": "^3.0.0"
   },
   "peerDependencies": {
-    "aws-sdk": "^2.435.0"
+    "@aws-sdk/client-sqs": "^3.0.0",
+    "@aws-sdk/node-http-handler": "^3.0.0"
   }
 }
