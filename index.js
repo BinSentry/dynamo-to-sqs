@@ -65,7 +65,11 @@ async function sendToSqs({ record, params, logPayloadTransformer = _.identity })
   const message = params.bodyHandler(record);
   const MessageBody = JSON.stringify(message);
 
-  params.logger.info('DynamoDB Record: %j', logPayloadTransformer(record));
+  try {
+    params.logger.info('DynamoDB Record: %j', logPayloadTransformer(record));
+  } catch (err) {
+    params.logger.error({ err }, 'Error logging DynamoDB record');
+  }
 
   const promises = params.sqsConfigs.map(sqsConfig => {
     const body = {
