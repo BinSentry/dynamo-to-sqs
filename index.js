@@ -15,7 +15,7 @@ const RAW_BODY_HANDLER = record => record;
 const NO_FILTER = () => true;
 
 class DynamoStreamHandler {
-  constructor({ sqsConfigs, logger, customBodyHandler, messageFilter } = {}) {
+  constructor({ sqsConfigs, logger, customBodyHandler, messageFilter, logPayloadTransformer } = {}) {
     assert(
       sqsConfigs && Array.isArray(sqsConfigs) && sqsConfigs.length > 0,
       'sqsConfig must be an array with at least one element',
@@ -39,7 +39,7 @@ class DynamoStreamHandler {
 
     this.handler = async (event, context) => {
       try {
-        const promises = event.Records.map(record => sendToSqs({ record, params }));
+        const promises = event.Records.map(record => sendToSqs({ record, params, logPayloadTransformer }));
         await Promise.all(promises);
 
         return `Successfully processed ${event.Records.length} records.`;
@@ -60,11 +60,16 @@ function setEventNames(sqsConfig) {
   );
 }
 
-async function sendToSqs({ record, params }) {
+async function sendToSqs({ record, params, logPayloadTransformer = (record) => record }) {
   const message = params.bodyHandler(record);
   const MessageBody = JSON.stringify(message);
 
-  params.logger.info('DynamoDB Record: %j', record);
+  try {
+    params.logger.info('DynamoDB Record: %j', logPayloadTransformer(record));
+  } catch (err) {
+    params.logger.error({ err }, 'Error logging DynamoDB record');
+    params.logger.info('DynamoDB Record: %j', record);
+  }
 
   const promises = params.sqsConfigs.map(sqsConfig => {
     const body = {
