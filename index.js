@@ -1,4 +1,3 @@
-const _ = require('lodash');
 const assert = require('assert');
 const { SQS } = require('@aws-sdk/client-sqs');
 const { NodeHttpHandler } = require('@aws-sdk/node-http-handler');
@@ -61,7 +60,7 @@ function setEventNames(sqsConfig) {
   );
 }
 
-async function sendToSqs({ record, params, logPayloadTransformer = _.identity }) {
+async function sendToSqs({ record, params, logPayloadTransformer = (record) => record }) {
   const message = params.bodyHandler(record);
   const MessageBody = JSON.stringify(message);
 
@@ -69,6 +68,7 @@ async function sendToSqs({ record, params, logPayloadTransformer = _.identity })
     params.logger.info('DynamoDB Record: %j', logPayloadTransformer(record));
   } catch (err) {
     params.logger.error({ err }, 'Error logging DynamoDB record');
+    params.logger.info('DynamoDB Record: %j', record);
   }
 
   const promises = params.sqsConfigs.map(sqsConfig => {
